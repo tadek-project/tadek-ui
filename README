@@ -1,0 +1,19 @@
+TADEK - Test Automation in a Distributed Environment
+====================================================
+
+TADEK is a novel approach to automatic testing and remote control
+of applications over accessibility and similar technologies.
+
+The main goals of the environment are:
+ * Providing a means for quality assurance of every project, even on a small
+   scale
+ * Simple and rapid test implementation, with no change to the application code,
+   in order to minimize the extra costs of QA
+ * Unified extensibility for provision of one common interface to many access
+   technologies
+ * Maintainability for re-using the same test cases on different projects and
+   platforms
+ * Flexibility to integrate with other systems, such as continuous integration
+
+Read more at http://tadek.comarch.com/
+
