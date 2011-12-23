@@ -1,0 +1,11 @@
+<RCC>
+  <qresource prefix="icons">
+    <file>tadek-icon.png</file>
+    <file>tadek-logo-wide.png</file>
+    <file>user-offline.png</file>
+    <file>user-online.png</file>
+    <file>phone.png</file>
+    <file>application-exit.png</file>
+    <file>configure.png</file>
+  </qresource>
+</RCC>

@@ -1,0 +1,17 @@
+<RCC>
+  <qresource prefix="explore/icons">
+    <file>process-stop.png</file>
+    <file>system-search.png</file>
+    <file>tab-close.png</file>
+    <file>view-refresh.png</file>
+    <file>edit-find.png</file>
+    <file>go-bottom.png</file>
+    <file>go-down.png</file>
+    <file>go-top.png</file>
+    <file>go-up.png</file>
+    <file>document-open.png</file>
+    <file>document-save-all.png</file>
+    <file>document-save.png</file>
+    <file>process-stop.png</file>
+  </qresource>
+</RCC>

@@ -1,0 +1,18 @@
+<RCC>
+  <qresource prefix="result/icons">
+    <file>show.png</file>
+    <file>hide.png</file>
+    <file>document-open.png</file>
+    <file>source_moc.png</file>
+    <file>go-bottom.png</file>
+    <file>go-down.png</file>
+    <file>go-top.png</file>
+    <file>go-up.png</file>
+    <file>mail-mark-task.png</file>
+    <file>tab-close.png</file>
+    <file>application-x-zip.png</file>
+    <file>inode-blockdevice.png</file>
+    <file>text-x-python.png</file>
+    <file>folder-grey.png</file>
+  </qresource>
+</RCC>

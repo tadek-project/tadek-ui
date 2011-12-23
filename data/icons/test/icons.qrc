@@ -1,0 +1,24 @@
+<RCC>
+  <qresource prefix="test/icons">
+    <file>go-top.png</file>
+    <file>go-up.png</file>
+    <file>archive-insert.png</file>
+    <file>archive-remove.png</file>
+    <file>media-playback-stop.png</file>
+    <file>media-playback-pause.png</file>
+    <file>media-playback-start.png</file>
+    <file>go-bottom.png</file>
+    <file>go-down.png</file>
+    <file>view-refresh.png</file>
+    <file>source_moc.png</file>
+    <file>folder-grey.png</file>
+    <file>text-x-python.png</file>
+    <file>inode-blockdevice.png</file>
+    <file>user-away-extended.png</file>
+    <file>emblem-important.png</file>
+    <file>edit-delete.png</file>
+    <file>dialog-ok-apply.png</file>
+    <file>system-run.png</file>
+    <file>edit-bomb.png</file>
+  </qresource>
+</RCC>
