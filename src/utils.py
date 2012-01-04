@@ -86,7 +86,7 @@ def viewName():
     If called from a code inside a package containing an implementation of
     a view, returns name of that view.
     '''
-    return os.path.basename(os.path.dirname(inspect.stack(1)[1][1]))
+    return os.path.basename(os.path.dirname(inspect.stack(0)[1][1]))
 
 def importModule(module):
     '''
@@ -205,6 +205,7 @@ class LastValues(object):
 class ClosableTabBar(QtGui.QTabBar):
     '''
     TabWidget that allows closing tabs using middle mouse button click.
+
     '''
     def __init__(self):
         QtGui.QTabBar.__init__(self)
