@@ -1,0 +1,12 @@
+include AUTHORS
+include CONTRIBUTION_AGREEMENT.pdf
+include LICENSE
+include README
+
+graft scripts
+
+recursive-include data/config *.conf
+recursive-include data/designer *.ui
+
+recursive-include src *.py
+
