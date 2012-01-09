@@ -38,6 +38,7 @@
 
 import os
 import sys
+import optparse
 
 from tadek.core import config
 config.setProgramName("tadek-ui")
@@ -54,7 +55,17 @@ except ImportError:
     log.critical("Required PySide libraries are not installed")
     sys.exit(2)
 
+USAGE = '''%prog [OPTION]...'''
+
+DESC = '''%prog is an user-frendly UI application providing all TADEK client 
+functionalities.'''
+
 if __name__ == "__main__":
+    parser = optparse.OptionParser(prog=config.getProgramName(),
+                                   usage=USAGE, description=DESC,
+                                   version=config.getProgramVersion())
+    parser.parse_args()
+    # Run the UI program
     app = QtGui.QApplication(sys.argv)
     ui.run()
     sys.exit(app.exec_())
