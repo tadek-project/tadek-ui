@@ -36,7 +36,7 @@
 
 from PySide import QtCore
 
-from tadek.core.config import VERSION, getProgramName
+from tadek.core.config import VERSION, NAME, getProgramName
 
 import utils
 
@@ -62,8 +62,9 @@ class About(QtCore.QObject):
         QtCore.QObject.__init__(self)
         elements = utils.loadUi(self._ABOUT_UI, parent=utils.window())
         self.dialog = elements["Dialog"]
+        self.dialog.setWindowTitle("About %s" % getProgramName())
         elements["buttonClose"].clicked.connect(self.dialog.close)
-        elements["labelName"].setText(getProgramName())
+        elements["labelName"].setText(NAME.upper())
         elements["labelVersion"].setText(VERSION)
         elements["labelDescription"].setText(DESCRIPTION)
         elements["labelCopyright"].setText(COPYRIGHT)

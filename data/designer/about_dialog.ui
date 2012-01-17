@@ -29,7 +29,7 @@
    </font>
   </property>
   <property name="windowTitle">
-   <string>About TADEK</string>
+   <string>About</string>
   </property>
   <layout class="QVBoxLayout" name="verticalLayout_2">
    <property name="spacing">
