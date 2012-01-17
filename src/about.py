@@ -36,9 +36,19 @@
 
 from PySide import QtCore
 
-from tadek.core.config import VERSION
+from tadek.core.config import VERSION, getProgramName
 
 import utils
+
+DESCRIPTION = '''%s is an advanced TADEK client using the PySide library.
+
+TADEK is a novel approach to automatic testing and remote control
+of applications over accessibility and similar technologies.''' \
+    % getProgramName()
+COPYRIGHT = '''Copyright &copy; 2011,2012 Comarch S.A.<br>
+All rights reserved.'''
+WEBSITE_URL = "http://tadek.comarch.com/"
+LICENSING_URL = "http://tadek.comarch.com/licensing"
 
 
 class About(QtCore.QObject):
@@ -46,14 +56,21 @@ class About(QtCore.QObject):
     An About dialog class.
     '''
     _ABOUT_UI = "about_dialog.ui"
+    _LINK = "<a href=\"%s\">%s</a>"
 
     def __init__(self):
         QtCore.QObject.__init__(self)
         elements = utils.loadUi(self._ABOUT_UI, parent=utils.window())
         self.dialog = elements["Dialog"]
         elements["buttonClose"].clicked.connect(self.dialog.close)
-        elements["labelVersion"].setText("Version: %s" % VERSION)
-
+        elements["labelName"].setText(getProgramName())
+        elements["labelVersion"].setText(VERSION)
+        elements["labelDescription"].setText(DESCRIPTION)
+        elements["labelCopyright"].setText(COPYRIGHT)
+        elements["labelWebsite"].setText(self._LINK %
+                                         (WEBSITE_URL, WEBSITE_URL))
+        elements["labelLicensing"].setText(self._LINK %
+                                           (LICENSING_URL, LICENSING_URL))
     def run(self):
         '''
         Shows the dialog and waits until it is closed.
