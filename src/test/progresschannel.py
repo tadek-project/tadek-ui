@@ -34,13 +34,11 @@
 ##                                                                            ##
 ################################################################################
 
+import threading
 from PySide import QtCore
 
 from tadek.engine import testresult
-import threading
-
 from tadek.engine.channels import register, TestResultChannel
-
 
 class ProgressChannelHelper(QtCore.QObject):
     '''
@@ -48,17 +46,19 @@ class ProgressChannelHelper(QtCore.QObject):
     It sends signals informing about progress of execution of tests.
     '''
     _PROGRESS_FORMAT = "Ran %%v of %d"
-    
-    stopped = QtCore.Signal()
-    stoppedTest = QtCore.Signal(testresult.TestResultBase,
+
+    testStarted = QtCore.Signal(testresult.TestResultBase,
                                 testresult.DeviceExecResult)
+    testStopped = QtCore.Signal(testresult.TestResultBase,
+                                testresult.DeviceExecResult)
+    stopped = QtCore.Signal()
 
     def __init__(self, progressBar):
         QtCore.QObject.__init__(self)
         self._progressBar = progressBar
         self._mutex = threading.RLock()
         self.reset()
-        self.stoppedTest.connect(self._update)
+        self.testStopped.connect(self._update)
 
     def start(self, result):
         '''
@@ -81,20 +81,25 @@ class ProgressChannelHelper(QtCore.QObject):
         self._stopped = False
         self.reset(n)
 
+    def startTest(self, result, device):
+        '''
+        Emits the 'testStarted' signal for the given test results.
+        '''
+        self.testStarted.emit(result, device)
+
     def stopTest(self, result, device):
         '''
-        Emits 'stoppedTest' signal and increments the counter of signals
+        Emits the 'testStopped' signal and increments the counter of signals
         awaiting to be handled.
         '''
         self._mutex.acquire()
         self._toHandle += 1
         self._mutex.release()
-        self.stoppedTest.emit(result, device)
-
+        self.testStopped.emit(result, device)
 
     def stop(self):
         '''
-        Emits 'stopped' signal if all previous 'stoppedTest' signals are
+        Emits the 'stopped' signal if all previous 'testStopped' signals are
         already handled.
         '''
         self._stopped = True
@@ -113,8 +118,8 @@ class ProgressChannelHelper(QtCore.QObject):
 
     def _update(self, result, device):
         '''
-        Updates the progress bar and Emits 'stopped' signal if all previous
-        'stoppedTest' signals are already handled.
+        Updates the progress bar and emits the 'stopped' signal if all previous
+        'testStopped' signals are already handled.
         '''
         if isinstance(result, testresult.TestCaseResult):
             self._progressBar.setValue(self._progressBar.value() + 1)
@@ -123,6 +128,7 @@ class ProgressChannelHelper(QtCore.QObject):
         self._mutex.release()
         if self._toHandle == 0 and self._stopped:
             self.stopped.emit()
+
 
 class ProgressChannel(TestResultChannel):
     '''
@@ -143,6 +149,13 @@ class ProgressChannel(TestResultChannel):
         '''
         TestResultChannel.start(self, result)
         self._progress.start(result)
+
+    def startTest(self, result, device):
+        '''
+        Signals start of execution of a test.
+        '''
+        TestResultChannel.startTest(self, result, device)
+        self._progress.startTest(result, device)
 
     def stopTest(self, result, device):
         '''

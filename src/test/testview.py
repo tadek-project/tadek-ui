@@ -224,10 +224,9 @@ class Test(View):
         self._parent.getStatusBar().addPermanentWidget(pBar, 1)
         self._progress = ProgressChannelHelper(pBar)
         channels.add(ProgressChannel, "_ui_progress", progress=self._progress)
-        self._progress.stopped.connect(self._onAllTestsStopped)
-        self._progress.stoppedTest.connect(self._onTestStopped)
-
-        self._runner = None
+        self._progress.testStarted.connect(self._onTestStarted)
+        self._progress.testStopped.connect(self._onTestStopped)
+        self._progress.stopped.connect(self._onStopped)
 
         self._tests = Tests(self._elements["treeWidgetLocations"],
                             self._elements["treeWidgetTests"],
@@ -246,6 +245,12 @@ class Test(View):
                                                         self._tests.collapseAll)
         self._elements["actionRefresh"].triggered.connect(self._tests.refresh)
 
+        # Initialize private test variables
+        self._suiteRuns = 0
+        self._todoSuites = 0
+        self._testResult = None
+        self._testRunner = None
+
 # Public methods:
     def saveState(self):
         '''
@@ -262,44 +267,20 @@ class Test(View):
         self._tests.loadState()
 
 # Slots:
-    #@QtCore.Slot()
-    def _onAllTestsStopped(self):
+    #@QtCore.Slot(Device)
+    def _deviceConnected(self, device):
         '''
-        Shows summary dialog.
+        Adds a device to list.
         '''
-        log.debug("All tests finished")
+        self._devices.add(device, check=self._checkOnConnect.getBool())
 
-        self._actionStart.setVisible(True)
-        self._actionStop.setVisible(False)
-        self._actionPause.setVisible(False)
-        self._actionResume.setVisible(False)
-
-        self._devices.deviceChecked.disconnect(self._runner.addDevice)
-        self._devices.deviceUnchecked.disconnect(self._runner.removeDevice)
-        self._devices.setWarning(False)
-
-        files = []
-        for c in self._runner.result.get():
-            if isinstance(c, channels.TestResultFileChannel) and c.isActive():
-                files.append((c.name, c.filePath()))
-        dialog = ReportDialog(
-                        self._testResult.get(name='_ui_summary')[0].getSummary(),
-                        files, len(self._devices.getChecked()) > 0)
-        dialog.closed.connect(self._progress.reset,
-                              type=QtCore.Qt.DirectConnection)
-        dialog.runAgainClicked.connect(self._startTests,
-                                       type=QtCore.Qt.QueuedConnection)
-        dialog.showDetailsClicked.connect(self._showDetails)
-        dialog.run()
-
-    #@QtCore.Slot(testresult.TestResultBase, testresult.DeviceExecResult)
-    def _onTestStopped(self, result, device):
+    #@QtCore.Slot(Device)
+    def _deviceDisconnected(self, device, error):
         '''
-        Takes a result and a device execution result and calls runner's join().
+        Removes given device from list. The error parameter can be set to True
+        to indicate that the device was disconnected due to an error.
         '''
-        if isinstance(result, testresult.TestCaseResult):
-            log.debug("Finished execution of test: %s" % result.id)
-        self._runner.join(0.1)
+        self._devices.remove(device)
 
     #@QtCore.Slot()
     def _startTests(self):
@@ -322,13 +303,15 @@ class Test(View):
             self._actionStart.setVisible(True)
             return
 
+        self._suiteRuns = 0
+        self._todoSuites = len(tests)
         self._testResult = testresult.TestResult()
-        self._runner = TestRunner(devices, tests, self._testResult)
-        self._devices.deviceChecked.connect(self._runner.addDevice)
-        self._devices.deviceUnchecked.connect(self._runner.removeDevice)
+        self._testRunner = TestRunner(devices, tests, self._testResult)
+        self._devices.deviceChecked.connect(self._testRunner.addDevice)
+        self._devices.deviceUnchecked.connect(self._testRunner.removeDevice)
         self._devices.setWarning(True)
 
-        self._runner.start()
+        self._testRunner.start()
 
         self._actionStop.setVisible(True)
         self._actionPause.setVisible(True)
@@ -343,7 +326,7 @@ class Test(View):
         self._actionStop.setVisible(False)
         self._actionPause.setVisible(False)
         self._actionResume.setVisible(False)
-        self._runner.stop()
+        self._testRunner.stop()
 
     #@QtCore.Slot()
     def _pauseTests(self):
@@ -355,7 +338,7 @@ class Test(View):
         self._actionStop.setVisible(True)
         self._actionPause.setVisible(False)
         self._actionResume.setVisible(True)
-        self._runner.pause()
+        self._testRunner.pause()
 
     #@QtCore.Slot()
     def _resumeTests(self):
@@ -367,7 +350,67 @@ class Test(View):
         self._actionStop.setVisible(True)
         self._actionPause.setVisible(True)
         self._actionResume.setVisible(False)
-        self._runner.resume()
+        self._testRunner.resume()
+
+    #@QtCore.Slot(testresult.TestResultBase, testresult.DeviceExecResult)
+    def _onTestStarted(self, result, device):
+        '''
+        Handles a start test execution of a test represented by the given
+        result.
+        '''
+        if isinstance(result, testresult.TestCaseResult):
+            log.debug("Began execution of test case: %s" % result.id)
+        # If it is a top-level test suite result then increase the counter of
+        # running top-level test suites
+        if result.parent is None:
+            self._suiteRuns += 1
+
+    #@QtCore.Slot(testresult.TestResultBase, testresult.DeviceExecResult)
+    def _onTestStopped(self, result, device):
+        '''
+        Handles a stop test execution of a test represented by the given
+        result.
+        '''
+        if isinstance(result, testresult.TestCaseResult):
+            log.debug("Finished execution of test case: %s" % result.id)
+        # If it is a top-level test suite result then decrease the counters of
+        # running top-level test suites and to do test suites.
+        if result.parent is None:
+            self._suiteRuns -= 1
+            self._todoSuites -= 1
+            # If all top-level test suites are done then join() the test runner
+            if self._suiteRuns == 0 and self._todoSuites <= 0:
+                self._testRunner.join()
+
+    #@QtCore.Slot()
+    def _onStopped(self):
+        '''
+        Shows summary dialog after finishing test executions.
+        '''
+        log.debug("All tests finished")
+
+        self._actionStart.setVisible(True)
+        self._actionStop.setVisible(False)
+        self._actionPause.setVisible(False)
+        self._actionResume.setVisible(False)
+
+        self._devices.deviceChecked.disconnect(self._testRunner.addDevice)
+        self._devices.deviceUnchecked.disconnect(self._testRunner.removeDevice)
+        self._devices.setWarning(False)
+
+        files = []
+        for c in self._testRunner.result.get():
+            if isinstance(c, channels.TestResultFileChannel) and c.isActive():
+                files.append((c.name, c.filePath()))
+        dialog = ReportDialog(
+                        self._testResult.get(name='_ui_summary')[0].getSummary(),
+                        files, len(self._devices.getChecked()) > 0)
+        dialog.closed.connect(self._progress.reset,
+                              type=QtCore.Qt.DirectConnection)
+        dialog.runAgainClicked.connect(self._startTests,
+                                       type=QtCore.Qt.QueuedConnection)
+        dialog.showDetailsClicked.connect(self._showDetails)
+        dialog.run()
 
     #@QtCore.Slot()
     def _showDetails(self):
@@ -379,19 +422,4 @@ class Test(View):
             log.debug("Showing details in Result view")
             resultView.activate()
             resultView.showLastResult()
-
-    #@QtCore.Slot(Device)
-    def _deviceConnected(self, device):
-        '''
-        Adds a device to list.
-        '''
-        self._devices.add(device, check=self._checkOnConnect.getBool())
-
-    #@QtCore.Slot(Device)
-    def _deviceDisconnected(self, device, error):
-        '''
-        Removes given device from list. The error parameter can be set to True
-        to indicate that the device was disconnected due to an error.
-        '''
-        self._devices.remove(device)
 
