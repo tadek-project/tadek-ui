@@ -365,7 +365,11 @@ class Explore(View):
                 self._changeText.setEnabled(True)
                 for tab in self._tabs.values():
                     if tab.tab == self._tabWidget.currentWidget():
-                        self._changeText.clicked.connect(tab.changeText)
+                        try:
+                            self._changeText.clicked.connect(tab.changeText,
+                                QtCore.Qt.UniqueConnection)
+                        except RuntimeError:
+                            pass
                         break
             else:
                 self._text.setReadOnly(True)
@@ -373,7 +377,7 @@ class Explore(View):
             self._elements["groupBoxText"].show()
         
         # value
-        if accessible.value:
+        if accessible.value is not None:
             self._value.setValue(accessible.value)
             if self._readOnly:
                 self._changeValue.setEnabled(False)
@@ -381,7 +385,11 @@ class Explore(View):
                 self._changeValue.setEnabled(True)
                 for tab in self._tabs.values():
                     if tab.tab == self._tabWidget.currentWidget():
-                        self._changeValue.clicked.connect(tab.changeValue)
+                        try:
+                            self._changeValue.clicked.connect(tab.changeValue,
+                                QtCore.Qt.UniqueConnection)
+                        except RuntimeError:
+                            pass
                         break
             self._elements["groupBoxValue"].show()
         else:
@@ -434,10 +442,18 @@ class Explore(View):
         self._text.setPlainText("")
         self._text.setReadOnly(True)
         self._changeText.setEnabled(False)
+        try:
+            self._changeText.clicked.disconnect()
+        except RuntimeError:
+            pass
         self._elements["groupBoxText"].hide()
         
         # value
         self._value.setValue(0)
+        try:
+            self._changeValue.clicked.disconnect()
+        except RuntimeError:
+            pass
         self._elements["groupBoxValue"].hide()
         
         # mouse dialog clear
